@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Thoughts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: #faf8f5;
+            color: #1a1a1a;
+            line-height: 1.7;
+            font-size: 18px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .date {
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .content {
+            margin-bottom: 4rem;
+        }
+
+        .content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .content h2 {
+            font-size: 1.8rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .content h3 {
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .content strong {
+            font-weight: 700;
+        }
+
+        .content em {
+            font-style: italic;
+        }
+
+        .resources {
+            border-top: 2px solid #1a1a1a;
+            padding-top: 2rem;
+        }
+
+        .resources h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .resources ul {
+            list-style: none;
+        }
+
+        .resources li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .resources li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #666;
+        }
+
+        .resources a {
+            color: #1a1a1a;
+            text-decoration: none;
+            border-bottom: 2px solid #d4d4d4;
+            transition: border-color 0.2s ease;
+        }
+
+        .resources a:hover {
+            border-bottom-color: #1a1a1a;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #d4d4d4;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Editable content styling */
+        [contenteditable="true"] {
+            outline: none;
+        }
+
+        [contenteditable="true"]:focus {
+            background: #fff9e6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            .container {
+                padding: 2rem 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .content h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 contenteditable="true">Your Title Goes Here</h1>
+            <div class="date">January 26, 2026</div>
+        </header>
+
+        <div class="content">
+            <p contenteditable="true">
+                Start writing your rant here. Click anywhere to edit. This is your space to say whatever's on your mind. 
+                Don't hold back. Let it all out.
+            </p>
+
+            <p contenteditable="true">
+                You can write as much as you want. Add paragraphs, make your points, go off on tangents. 
+                This is all about getting your thoughts down without any distractions.
+            </p>
+
+            <p contenteditable="true">
+                The design is minimal on purpose - just you, your words, and the page. No fancy stuff getting in the way. 
+                Just write what you need to write.
+            </p>
+
+            <h2 contenteditable="true">Maybe You Want a Subheading</h2>
+
+            <p contenteditable="true">
+                You can add subheadings to organize your thoughts if you want. Or don't. Whatever works for you.
+            </p>
+
+            <p contenteditable="true">
+                Keep going. Add more paragraphs. Make your case. Explain your position. Get it all out there.
+            </p>
+
+            <p contenteditable="true">
+                This is the last placeholder paragraph, but feel free to add as many as you need. Just keep clicking and typing.
+            </p>
+        </div>
+
+        <div class="resources">
+            <h2>Resources & Links</h2>
+            <ul>
+                <li><a href="#" contenteditable="true">Link Title Here</a> - <span contenteditable="true">Brief description of what this link is about</span></li>
+                <li><a href="#" contenteditable="true">Another Resource</a> - <span contenteditable="true">Why this link is relevant to your rant</span></li>
+                <li><a href="#" contenteditable="true">More Reading</a> - <span contenteditable="true">Additional context or background</span></li>
+                <li><a href="#" contenteditable="true">Related Article</a> - <span contenteditable="true">Something else worth checking out</span></li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>Last updated: <span class="date">January 26, 2026</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // Update date automatically
+        const dateElements = document.querySelectorAll('.date');
+        const today = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        dateElements.forEach(el => {
+            if (el.textContent.includes('January 26, 2026')) {
+                el.textContent = today;
+            }
+        });
+
+        // Simple save to localStorage
+        const saveContent = () => {
+            const content = document.querySelector('.container').innerHTML;
+            localStorage.setItem('rantContent', content);
+        };
+
+        // Load saved content
+        const loadContent = () => {
+            const saved = localStorage.getItem('rantContent');
+            if (saved) {
+                document.querySelector('.container').innerHTML = saved;
+            }
+        };
+
+        // Auto-save on changes
+        document.querySelector('.container').addEventListener('input', saveContent);
+
+        // Load on page load
+        window.addEventListener('load', loadContent);
+    </script>
+</body>
+</html>
