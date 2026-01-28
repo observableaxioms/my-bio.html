@@ -16,10 +16,11 @@
 
         body {
             font-family: 'Crimson Pro', serif;
-            background: #faf8f5;
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
             line-height: 1.7;
             font-size: 18px;
+            min-height: 100vh;
         }
 
         .container {
@@ -30,7 +31,7 @@
 
         header {
             margin-bottom: 3rem;
-            border-bottom: 2px solid #1a1a1a;
+            border-bottom: 2px solid #ffffff;
             padding-bottom: 2rem;
         }
 
@@ -39,12 +40,13 @@
             font-weight: 700;
             margin-bottom: 0.5rem;
             line-height: 1.2;
+            color: #ffffff;
         }
 
         .date {
             font-family: 'Courier Prime', monospace;
             font-size: 0.9rem;
-            color: #666;
+            color: #e0d4f7;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -62,6 +64,7 @@
             margin-top: 2.5rem;
             margin-bottom: 1rem;
             font-weight: 600;
+            color: #ffffff;
         }
 
         .content h3 {
@@ -69,6 +72,7 @@
             margin-top: 2rem;
             margin-bottom: 0.8rem;
             font-weight: 600;
+            color: #ffffff;
         }
 
         .content strong {
@@ -80,7 +84,7 @@
         }
 
         .resources {
-            border-top: 2px solid #1a1a1a;
+            border-top: 2px solid #ffffff;
             padding-top: 2rem;
         }
 
@@ -88,6 +92,7 @@
             font-size: 1.5rem;
             margin-bottom: 1.5rem;
             font-weight: 700;
+            color: #ffffff;
         }
 
         .resources ul {
@@ -104,27 +109,27 @@
             content: "→";
             position: absolute;
             left: 0;
-            color: #666;
+            color: #e0d4f7;
         }
 
         .resources a {
-            color: #1a1a1a;
+            color: #ffffff;
             text-decoration: none;
-            border-bottom: 2px solid #d4d4d4;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
             transition: border-color 0.2s ease;
         }
 
         .resources a:hover {
-            border-bottom-color: #1a1a1a;
+            border-bottom-color: #ffffff;
         }
 
         footer {
             margin-top: 4rem;
             padding-top: 2rem;
-            border-top: 1px solid #d4d4d4;
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
             text-align: center;
             font-size: 0.9rem;
-            color: #666;
+            color: #e0d4f7;
         }
 
         /* Editable content styling */
@@ -133,7 +138,8 @@
         }
 
         [contenteditable="true"]:focus {
-            background: #fff9e6;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
         }
 
         @media (max-width: 768px) {
@@ -182,7 +188,7 @@
                 My mother was one of the few educated woman in my country who did a PhD on genome studies, and was forced to give up her job to be a better "housewife."
                 That sinewy, shadow of death followed me to silicon valley, where I constantly felt like I would do anything to not look the way I did so I could be just listened 
                 to for my ideas and accepted for me. But soon I find out that, the Social Network was just a hyperbole that still accurately depicted life in silicon valley. 
-                They don’t want you. They want your idea and want you to say “thank you” while you, excuse me, wipe your chin and walk away. 
+                They don't want you. They want your idea and want you to say "thank you" while you, excuse me, wipe your chin and walk away. 
             </p>
         </div>
 
@@ -195,7 +201,7 @@
                <li><a href="https://www.youtube.com/watch?v=OkmNXy7er84">Putnam Math Competition</a> - <span contenteditable="true">I want to compete in this</span></li>
                <li><a href="https://www.youtube.com/watch?v=RQWpF2Gb-gU">Why quantum computers exploit superposition</a> - <span contenteditable="true">Quantum computing</span></li>
                <li><a href="https://www.youtube.com/watch?v=EmKQsSDlaa4">The Hologram Hackathon</a> - <span contenteditable="true">calculating the angle of light</span></li>
-               <li><a href="https://acenturyoldwhisperer.journoportfolio.com/">My writings/a> - <span contenteditable="true">The disappearing staircase demonstrates how particles behave in this alternate reality or reality that is defined in a different sense (how do I use this to demonstrate quantum physics -empty spaces ) (the staircase can feel hollow inside instead of disappearing?) </span></li>
+               <li><a href="https://acenturyoldwhisperer.journoportfolio.com/">My writings</a> - <span contenteditable="true">The disappearing staircase demonstrates how particles behave in this alternate reality or reality that is defined in a different sense (how do I use this to demonstrate quantum physics -empty spaces ) (the staircase can feel hollow inside instead of disappearing?) </span></li>
             </ul>
         </div>
 
