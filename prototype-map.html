@@ -30,7 +30,6 @@
     overflow-x: hidden;
   }
 
-  /* background grid */
   body::before {
     content: '';
     position: fixed;
@@ -43,6 +42,111 @@
     z-index: 0;
   }
 
+  /* ===== PASSWORD GATE ===== */
+  #gate {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #gate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,179,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,179,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .gate-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .gate-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #pw {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    color: var(--accent1);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 14px 24px;
+    outline: none;
+    width: 280px;
+    text-align: center;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 3px;
+  }
+
+  #pw:focus { border-color: var(--accent1); }
+
+  #pw-error {
+    color: var(--accent2);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.2s;
+    height: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #gate-btn {
+    background: transparent;
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+    position: relative;
+    z-index: 1;
+  }
+
+  #gate-btn:hover {
+    background: rgba(0,255,179,0.08);
+  }
+
+  .gate-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--border));
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== MAIN CONTENT ===== */
   header {
     position: relative;
     z-index: 10;
@@ -105,7 +209,6 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  /* ===== PIPELINE MAP ===== */
   .pipeline {
     position: relative;
     z-index: 1;
@@ -171,8 +274,7 @@
     transition: transform 0.25s;
   }
 
-  .node:hover::before,
-  .node.active::before { transform: scaleX(1); }
+  .node:hover::before, .node.active::before { transform: scaleX(1); }
 
   .node:hover, .node.active {
     border-color: currentColor;
@@ -234,7 +336,6 @@
     color: var(--muted);
   }
 
-  /* ===== DETAIL PANEL ===== */
   .detail-panel {
     position: fixed;
     right: 0; top: 0; bottom: 0;
@@ -280,9 +381,7 @@
     line-height: 1.2;
   }
 
-  .panel-section {
-    margin-bottom: 24px;
-  }
+  .panel-section { margin-bottom: 24px; }
 
   .panel-section h4 {
     font-size: 10px;
@@ -312,11 +411,7 @@
     white-space: pre;
   }
 
-  .pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
 
   .pill {
     font-size: 10px;
@@ -326,7 +421,6 @@
     opacity: 0.8;
   }
 
-  /* ===== SCHEMA VIEW ===== */
   .schema-grid {
     position: relative;
     z-index: 1;
@@ -365,9 +459,7 @@
     text-transform: uppercase;
   }
 
-  .schema-fields {
-    padding: 16px 20px;
-  }
+  .schema-fields { padding: 16px 20px; }
 
   .field-row {
     display: flex;
@@ -384,7 +476,6 @@
   .field-type { color: var(--accent3); font-size: 10px; }
   .field-note { color: var(--muted); font-size: 10px; flex: 1; }
 
-  /* ===== MATH VIEW ===== */
   .math-view {
     position: relative;
     z-index: 1;
@@ -446,7 +537,6 @@
     margin: 0 2px;
   }
 
-  /* status dot */
   .dot {
     width: 7px; height: 7px;
     border-radius: 50%;
@@ -460,7 +550,6 @@
     50% { opacity: 0.3; }
   }
 
-  /* overlay */
   .overlay {
     position: fixed;
     inset: 0;
@@ -470,6 +559,7 @@
     pointer-events: none;
     transition: opacity 0.3s;
   }
+
   .overlay.active {
     opacity: 1;
     pointer-events: all;
@@ -494,13 +584,23 @@
     color: var(--muted);
   }
 
-  .legend-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 </style>
 </head>
 <body>
+
+<!-- ===== PASSWORD GATE ===== -->
+<div id="gate">
+  <div class="gate-line"></div>
+  <div class="gate-title">PROTOTYPE MAP</div>
+  <div class="gate-sub">DPO + Sector Intelligence Monitor</div>
+  <input id="pw" type="password" placeholder="enter password" onkeydown="if(event.key==='Enter')check()" autofocus />
+  <div id="pw-error">incorrect password</div>
+  <button id="gate-btn" onclick="check()">enter →</button>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" style="display:none">
 
 <header>
   <h1>PROTOTYPE MAP</h1>
@@ -508,9 +608,9 @@
 </header>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('pipeline')">Pipeline Flow</button>
-  <button class="tab" onclick="switchTab('schema')">Schema Design</button>
-  <button class="tab" onclick="switchTab('math')">Math Reference</button>
+  <button class="tab active" onclick="switchTab('pipeline', event)">Pipeline Flow</button>
+  <button class="tab" onclick="switchTab('schema', event)">Schema Design</button>
+  <button class="tab" onclick="switchTab('math', event)">Math Reference</button>
 </div>
 
 <div class="legend">
@@ -529,26 +629,25 @@
 <div id="tab-pipeline" class="tab-content active">
   <div class="pipeline">
 
-    <!-- STAGE 1: DATA -->
     <div class="stage">
       <div class="stage-label" style="color:var(--accent1)">01 · Data</div>
       <div class="nodes">
-        <div class="node c1" onclick="openPanel('sa-scraper')">
+        <div class="node c1" onclick="openPanel('sa-scraper', event)">
           <div class="node-tag">Sector Monitor</div>
           <div class="node-title">SA Scraper</div>
           <div class="node-sub">SeekingAlpha RSS + HTTP<br>+ sector keyword filter</div>
         </div>
-        <div class="node c1" onclick="openPanel('raw-store')">
+        <div class="node c1" onclick="openPanel('raw-store', event)">
           <div class="node-tag">Storage</div>
           <div class="node-title">Raw Store</div>
           <div class="node-sub">articles table<br>PostgreSQL / SQLite</div>
         </div>
-        <div class="node c1" onclick="openPanel('hf-dataset')">
+        <div class="node c1" onclick="openPanel('hf-dataset', event)">
           <div class="node-tag">DPO Data</div>
           <div class="node-title">HF Dataset</div>
           <div class="node-sub">ultrafeedback_binarized<br>or custom pref pairs</div>
         </div>
-        <div class="node c1" onclick="openPanel('cleaner')">
+        <div class="node c1" onclick="openPanel('cleaner', event)">
           <div class="node-tag">Processing</div>
           <div class="node-title">clean.py</div>
           <div class="node-sub">dedup · filter low contrast<br>normalize schema</div>
@@ -558,21 +657,20 @@
 
     <div class="arrow"></div>
 
-    <!-- STAGE 2: MODEL SETUP -->
     <div class="stage">
       <div class="stage-label" style="color:var(--accent2)">02 · Model</div>
       <div class="nodes">
-        <div class="node c2" onclick="openPanel('base-model')">
+        <div class="node c2" onclick="openPanel('base-model', event)">
           <div class="node-tag">Backbone</div>
           <div class="node-title">Base Model</div>
           <div class="node-sub">Qwen2.5-1.5B / Llama-3<br>load_in_4bit via bitsandbytes</div>
         </div>
-        <div class="node c2" onclick="openPanel('lora')">
+        <div class="node c2" onclick="openPanel('lora', event)">
           <div class="node-tag">PEFT</div>
           <div class="node-title">LoRA Config</div>
           <div class="node-sub">r=16, α=32<br>~1-2% trainable params</div>
         </div>
-        <div class="node c2" onclick="openPanel('ref-model')">
+        <div class="node c2" onclick="openPanel('ref-model', event)">
           <div class="node-tag">Frozen</div>
           <div class="node-title">Reference π_ref</div>
           <div class="node-sub">same base, no grad<br>KL anchor for DPO loss</div>
@@ -582,21 +680,20 @@
 
     <div class="arrow"></div>
 
-    <!-- STAGE 3: TRAINING -->
     <div class="stage">
       <div class="stage-label" style="color:var(--accent2)">03 · Train</div>
       <div class="nodes">
-        <div class="node c2" onclick="openPanel('dpo-loss')">
+        <div class="node c2" onclick="openPanel('dpo-loss', event)">
           <div class="node-tag">Core</div>
           <div class="node-title">dpo_loss.py</div>
           <div class="node-sub">~25 lines PyTorch<br>log-prob ratio + sigmoid</div>
         </div>
-        <div class="node c2" onclick="openPanel('trainer')">
+        <div class="node c2" onclick="openPanel('trainer', event)">
           <div class="node-tag">Loop</div>
           <div class="node-title">trainer.py</div>
           <div class="node-sub">AdamW · grad clip<br>wandb logging</div>
         </div>
-        <div class="node c2" onclick="openPanel('config')">
+        <div class="node c2" onclick="openPanel('config', event)">
           <div class="node-tag">Hyperparams</div>
           <div class="node-title">config.py</div>
           <div class="node-sub">β=0.1 · lr=1e-5<br>batch=4 · epochs=1-3</div>
@@ -606,16 +703,15 @@
 
     <div class="arrow"></div>
 
-    <!-- STAGE 4: EVAL -->
     <div class="stage">
       <div class="stage-label" style="color:var(--accent3)">04 · Eval</div>
       <div class="nodes">
-        <div class="node c3" onclick="openPanel('reward-gap')">
+        <div class="node c3" onclick="openPanel('reward-gap', event)">
           <div class="node-tag">DPO Metric</div>
           <div class="node-title">Reward Gap</div>
           <div class="node-sub">log π_θ(y_w) - log π_θ(y_l)<br>should be &gt; 0 and growing</div>
         </div>
-        <div class="node c3" onclick="openPanel('sector-eval')">
+        <div class="node c3" onclick="openPanel('sector-eval', event)">
           <div class="node-tag">Sector Monitor</div>
           <div class="node-title">Signal Quality</div>
           <div class="node-sub">precision of sector tags<br>latency of alerts</div>
@@ -625,21 +721,20 @@
 
     <div class="arrow"></div>
 
-    <!-- STAGE 5: SERVE -->
     <div class="stage">
       <div class="stage-label" style="color:#60a5fa">05 · Serve</div>
       <div class="nodes">
-        <div class="node cw" onclick="openPanel('generate')">
+        <div class="node cw" onclick="openPanel('generate', event)">
           <div class="node-tag">Inference</div>
           <div class="node-title">generate.py</div>
           <div class="node-sub">merge LoRA · vLLM<br>streaming decode</div>
         </div>
-        <div class="node cw" onclick="openPanel('api-server')">
+        <div class="node cw" onclick="openPanel('api-server', event)">
           <div class="node-tag">API</div>
           <div class="node-title">FastAPI Server</div>
           <div class="node-sub">/generate · /analyze-article<br>webhook for SA alerts</div>
         </div>
-        <div class="node c4" onclick="openPanel('alerts')">
+        <div class="node c4" onclick="openPanel('alerts', event)">
           <div class="node-tag">Monitor Output</div>
           <div class="node-title">Alert System</div>
           <div class="node-sub">Slack / email webhook<br>on new sector hit</div>
@@ -858,14 +953,35 @@
   <div id="panel-body"></div>
 </div>
 
+</div> <!-- end #app -->
+
 <script>
-function switchTab(name) {
+// ===== PASSWORD GATE =====
+function check() {
+  const correct = "YOUR_PASSWORD_HERE"; // ← replace this with your password
+  const val = document.getElementById('pw').value;
+  if (val === correct) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } else {
+    document.getElementById('pw-error').style.opacity = '1';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+    setTimeout(() => {
+      document.getElementById('pw-error').style.opacity = '0';
+    }, 2000);
+  }
+}
+
+// ===== TABS =====
+function switchTab(name, e) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  e.target.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
 }
 
+// ===== PANELS =====
 const panels = {
   'sa-scraper': {
     tag: 'Data · Sector Monitor',
@@ -1189,7 +1305,7 @@ POST /webhook/article-alert
   }
 };
 
-function openPanel(id) {
+function openPanel(id, e) {
   const data = panels[id];
   if (!data) return;
   document.getElementById('panel-tag').textContent = data.tag;
@@ -1199,9 +1315,8 @@ function openPanel(id) {
   document.getElementById('panel-body').innerHTML = data.body;
   document.getElementById('detail-panel').classList.add('open');
   document.getElementById('overlay').classList.add('active');
-
   document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  e.currentTarget.classList.add('active');
 }
 
 function closePanel() {
