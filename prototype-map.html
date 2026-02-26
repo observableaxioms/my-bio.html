@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototype Map — DPO + Sector Monitor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent1: #00ffb3;
+    --accent2: #ff6b35;
+    --accent3: #7c3aff;
+    --accent4: #ffd166;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --node-bg: #16161f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,179,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,179,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 40px 60px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  header .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .tabs {
+    position: relative;
+    z-index: 10;
+    padding: 24px 60px 0;
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 10px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--muted);
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    transition: all 0.2s;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    color: var(--accent1);
+    border-color: var(--border);
+    background: var(--surface);
+    border-bottom: 1px solid var(--surface);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== PIPELINE MAP ===== */
+  .pipeline {
+    position: relative;
+    z-index: 1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .stage {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 0;
+  }
+
+  .stage-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    min-width: 48px;
+    border-right: 1px solid var(--border);
+    margin-right: 32px;
+  }
+
+  .nodes {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 24px 0;
+    flex: 1;
+    align-items: center;
+  }
+
+  .node {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    min-width: 160px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .node::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: currentColor;
+    opacity: 0.6;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s;
+  }
+
+  .node:hover::before,
+  .node.active::before { transform: scaleX(1); }
+
+  .node:hover, .node.active {
+    border-color: currentColor;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .node-tag {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.6;
+  }
+
+  .node-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .node-sub {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .node.c1 { color: var(--accent1); }
+  .node.c2 { color: var(--accent2); }
+  .node.c3 { color: var(--accent3); }
+  .node.c4 { color: var(--accent4); }
+  .node.cw { color: #60a5fa; }
+
+  .arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 0 0 80px;
+    height: 28px;
+    position: relative;
+  }
+
+  .arrow::before {
+    content: '';
+    position: absolute;
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(to bottom, var(--border), var(--muted));
+  }
+
+  .arrow::after {
+    content: '▼';
+    position: absolute;
+    left: 73px;
+    bottom: 0;
+    font-size: 8px;
+    color: var(--muted);
+  }
+
+  /* ===== DETAIL PANEL ===== */
+  .detail-panel {
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    width: 380px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+    padding: 40px 32px;
+  }
+
+  .detail-panel.open { transform: translateX(0); }
+
+  .panel-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .panel-close:hover { color: var(--text); border-color: var(--muted); }
+
+  .panel-tag {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    line-height: 1.2;
+  }
+
+  .panel-section {
+    margin-bottom: 24px;
+  }
+
+  .panel-section h4 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-section p {
+    font-size: 12px;
+    line-height: 1.8;
+    color: #a0a0c0;
+  }
+
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--accent1);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    opacity: 0.8;
+  }
+
+  /* ===== SCHEMA VIEW ===== */
+  .schema-grid {
+    position: relative;
+    z-index: 1;
+    padding: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+
+  .schema-card {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .schema-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .schema-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .schema-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .schema-fields {
+    padding: 16px 20px;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 11px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-name { color: var(--accent1); min-width: 120px; }
+  .field-type { color: var(--accent3); font-size: 10px; }
+  .field-note { color: var(--muted); font-size: 10px; flex: 1; }
+
+  /* ===== MATH VIEW ===== */
+  .math-view {
+    position: relative;
+    z-index: 1;
+    padding: 60px;
+    max-width: 900px;
+  }
+
+  .math-block {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  .math-block-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .math-block-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .equation {
+    font-size: 15px;
+    color: var(--accent1);
+    letter-spacing: 0.5px;
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--bg);
+    border-left: 3px solid var(--accent1);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .eq-explain {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.9;
+    margin-top: 12px;
+  }
+
+  .eq-var {
+    display: inline-block;
+    background: rgba(124,58,255,0.15);
+    color: var(--accent3);
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    margin: 0 2px;
+  }
+
+  /* status dot */
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    padding: 16px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PROTOTYPE MAP</h1>
+  <span class="subtitle">DPO Training System + Sector Intelligence Monitor</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('pipeline')">Pipeline Flow</button>
+  <button class="tab" onclick="switchTab('schema')">Schema Design</button>
+  <button class="tab" onclick="switchTab('math')">Math Reference</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent1)"></div>Data / Ingestion</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Model / Training</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Evaluation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent4)"></div>Sector Monitor</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Serving / Output</div>
+  <div class="legend-item" style="margin-left:auto">
+    <span class="dot" style="background:var(--accent1)"></span>
+    Click nodes for detail
+  </div>
+</div>
+
+<!-- ===== PIPELINE TAB ===== -->
+<div id="tab-pipeline" class="tab-content active">
+  <div class="pipeline">
+
+    <!-- STAGE 1: DATA -->
+    <div class="stage">
+      <div class="stage-label" style="color:var(--accent1)">01 · Data</div>
+      <div class="nodes">
+        <div class="node c1" onclick="openPanel('sa-scraper')">
+          <div class="node-tag">Sector Monitor</div>
+          <div class="node-title">SA Scraper</div>
+          <div class="node-sub">SeekingAlpha RSS + HTTP<br>+ sector keyword filter</div>
+        </div>
+        <div class="node c1" onclick="openPanel('raw-store')">
+          <div class="node-tag">Storage</div>
+          <div class="node-title">Raw Store</div>
+          <div class="node-sub">articles table<br>PostgreSQL / SQLite</div>
+        </div>
+        <div class="node c1" onclick="openPanel('hf-dataset')">
+          <div class="node-tag">DPO Data</div>
+          <div class="node-title">HF Dataset</div>
+          <div class="node-sub">ultrafeedback_binarized<br>or custom pref pairs</div>
+        </div>
+        <div class="node c1" onclick="openPanel('cleaner')">
+          <div class="node-tag">Processing</div>
+          <div class="node-title">clean.py</div>
+          <div class="node-sub">dedup · filter low contrast<br>normalize schema</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"></div>
+
+    <!-- STAGE 2: MODEL SETUP -->
+    <div class="stage">
+      <div class="stage-label" style="color:var(--accent2)">02 · Model</div>
+      <div class="nodes">
+        <div class="node c2" onclick="openPanel('base-model')">
+          <div class="node-tag">Backbone</div>
+          <div class="node-title">Base Model</div>
+          <div class="node-sub">Qwen2.5-1.5B / Llama-3<br>load_in_4bit via bitsandbytes</div>
+        </div>
+        <div class="node c2" onclick="openPanel('lora')">
+          <div class="node-tag">PEFT</div>
+          <div class="node-title">LoRA Config</div>
+          <div class="node-sub">r=16, α=32<br>~1-2% trainable params</div>
+        </div>
+        <div class="node c2" onclick="openPanel('ref-model')">
+          <div class="node-tag">Frozen</div>
+          <div class="node-title">Reference π_ref</div>
+          <div class="node-sub">same base, no grad<br>KL anchor for DPO loss</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"></div>
+
+    <!-- STAGE 3: TRAINING -->
+    <div class="stage">
+      <div class="stage-label" style="color:var(--accent2)">03 · Train</div>
+      <div class="nodes">
+        <div class="node c2" onclick="openPanel('dpo-loss')">
+          <div class="node-tag">Core</div>
+          <div class="node-title">dpo_loss.py</div>
+          <div class="node-sub">~25 lines PyTorch<br>log-prob ratio + sigmoid</div>
+        </div>
+        <div class="node c2" onclick="openPanel('trainer')">
+          <div class="node-tag">Loop</div>
+          <div class="node-title">trainer.py</div>
+          <div class="node-sub">AdamW · grad clip<br>wandb logging</div>
+        </div>
+        <div class="node c2" onclick="openPanel('config')">
+          <div class="node-tag">Hyperparams</div>
+          <div class="node-title">config.py</div>
+          <div class="node-sub">β=0.1 · lr=1e-5<br>batch=4 · epochs=1-3</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"></div>
+
+    <!-- STAGE 4: EVAL -->
+    <div class="stage">
+      <div class="stage-label" style="color:var(--accent3)">04 · Eval</div>
+      <div class="nodes">
+        <div class="node c3" onclick="openPanel('reward-gap')">
+          <div class="node-tag">DPO Metric</div>
+          <div class="node-title">Reward Gap</div>
+          <div class="node-sub">log π_θ(y_w) - log π_θ(y_l)<br>should be &gt; 0 and growing</div>
+        </div>
+        <div class="node c3" onclick="openPanel('sector-eval')">
+          <div class="node-tag">Sector Monitor</div>
+          <div class="node-title">Signal Quality</div>
+          <div class="node-sub">precision of sector tags<br>latency of alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"></div>
+
+    <!-- STAGE 5: SERVE -->
+    <div class="stage">
+      <div class="stage-label" style="color:#60a5fa">05 · Serve</div>
+      <div class="nodes">
+        <div class="node cw" onclick="openPanel('generate')">
+          <div class="node-tag">Inference</div>
+          <div class="node-title">generate.py</div>
+          <div class="node-sub">merge LoRA · vLLM<br>streaming decode</div>
+        </div>
+        <div class="node cw" onclick="openPanel('api-server')">
+          <div class="node-tag">API</div>
+          <div class="node-title">FastAPI Server</div>
+          <div class="node-sub">/generate · /analyze-article<br>webhook for SA alerts</div>
+        </div>
+        <div class="node c4" onclick="openPanel('alerts')">
+          <div class="node-tag">Monitor Output</div>
+          <div class="node-title">Alert System</div>
+          <div class="node-sub">Slack / email webhook<br>on new sector hit</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== SCHEMA TAB ===== -->
+<div id="tab-schema" class="tab-content">
+  <div class="schema-grid">
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-name" style="color:var(--accent4)">articles</div>
+        <div class="schema-badge" style="background:rgba(255,209,102,0.1);color:var(--accent4)">SA Scraper</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID PK</span></div>
+        <div class="field-row"><span class="field-name">url</span><span class="field-type">TEXT</span><span class="field-note">unique</span></div>
+        <div class="field-row"><span class="field-name">title</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">body</span><span class="field-type">TEXT</span><span class="field-note">raw HTML stripped</span></div>
+        <div class="field-row"><span class="field-name">author</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">published_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+        <div class="field-row"><span class="field-name">scraped_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+        <div class="field-row"><span class="field-name">sector_tags</span><span class="field-type">TEXT[]</span><span class="field-note">e.g. ["semis","AI"]</span></div>
+        <div class="field-row"><span class="field-name">tickers</span><span class="field-type">TEXT[]</span><span class="field-note">extracted mentions</span></div>
+        <div class="field-row"><span class="field-name">sentiment</span><span class="field-type">FLOAT</span><span class="field-note">-1 to 1</span></div>
+        <div class="field-row"><span class="field-name">alert_fired</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">embedding</span><span class="field-type">VECTOR(768)</span><span class="field-note">pgvector</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-name" style="color:var(--accent1)">preference_pairs</div>
+        <div class="schema-badge" style="background:rgba(0,255,179,0.1);color:var(--accent1)">DPO Data</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID PK</span></div>
+        <div class="field-row"><span class="field-name">prompt</span><span class="field-type">TEXT</span><span class="field-note">user turn(s)</span></div>
+        <div class="field-row"><span class="field-name">chosen</span><span class="field-type">TEXT</span><span class="field-note">y_w — preferred response</span></div>
+        <div class="field-row"><span class="field-name">rejected</span><span class="field-type">TEXT</span><span class="field-note">y_l — dispreferred</span></div>
+        <div class="field-row"><span class="field-name">source</span><span class="field-type">TEXT</span><span class="field-note">ultrafeedback / custom</span></div>
+        <div class="field-row"><span class="field-name">chosen_score</span><span class="field-type">FLOAT</span><span class="field-note">annotator rating</span></div>
+        <div class="field-row"><span class="field-name">rejected_score</span><span class="field-type">FLOAT</span></div>
+        <div class="field-row"><span class="field-name">score_gap</span><span class="field-type">FLOAT</span><span class="field-note">filter if &lt; threshold</span></div>
+        <div class="field-row"><span class="field-name">token_len_chosen</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">token_len_rejected</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">split</span><span class="field-type">TEXT</span><span class="field-note">train / val / test</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-name" style="color:var(--accent3)">training_runs</div>
+        <div class="schema-badge" style="background:rgba(124,58,255,0.1);color:var(--accent3)">Experiment Tracking</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">run_id</span><span class="field-type">UUID PK</span></div>
+        <div class="field-row"><span class="field-name">model_name</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">beta</span><span class="field-type">FLOAT</span><span class="field-note">KL penalty strength</span></div>
+        <div class="field-row"><span class="field-name">lr</span><span class="field-type">FLOAT</span></div>
+        <div class="field-row"><span class="field-name">batch_size</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">lora_r</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">lora_alpha</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">epochs</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">final_loss</span><span class="field-type">FLOAT</span></div>
+        <div class="field-row"><span class="field-name">reward_gap_val</span><span class="field-type">FLOAT</span><span class="field-note">eval metric</span></div>
+        <div class="field-row"><span class="field-name">checkpoint_path</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">started_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-name" style="color:var(--accent2)">sector_alerts</div>
+        <div class="schema-badge" style="background:rgba(255,107,53,0.1);color:var(--accent2)">Monitor</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID PK</span></div>
+        <div class="field-row"><span class="field-name">article_id</span><span class="field-type">UUID FK</span><span class="field-note">→ articles</span></div>
+        <div class="field-row"><span class="field-name">sector</span><span class="field-type">TEXT</span><span class="field-note">e.g. "semiconductors"</span></div>
+        <div class="field-row"><span class="field-name">trigger_rule</span><span class="field-type">TEXT</span><span class="field-note">keyword / model / both</span></div>
+        <div class="field-row"><span class="field-name">confidence</span><span class="field-type">FLOAT</span></div>
+        <div class="field-row"><span class="field-name">fired_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+        <div class="field-row"><span class="field-name">channel</span><span class="field-type">TEXT</span><span class="field-note">slack / email / webhook</span></div>
+        <div class="field-row"><span class="field-name">delivered</span><span class="field-type">BOOLEAN</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-header">
+        <div class="schema-name" style="color:#60a5fa">watched_sectors</div>
+        <div class="schema-badge" style="background:rgba(96,165,250,0.1);color:#60a5fa">Config</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID PK</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">TEXT</span><span class="field-note">display name</span></div>
+        <div class="field-row"><span class="field-name">keywords</span><span class="field-type">TEXT[]</span><span class="field-note">match in title/body</span></div>
+        <div class="field-row"><span class="field-name">tickers</span><span class="field-type">TEXT[]</span><span class="field-note">$NVDA, $AMD…</span></div>
+        <div class="field-row"><span class="field-name">active</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">min_confidence</span><span class="field-type">FLOAT</span><span class="field-note">alert threshold</span></div>
+        <div class="field-row"><span class="field-name">alert_channels</span><span class="field-type">TEXT[]</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">TIMESTAMPTZ</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card" style="border-style: dashed; opacity:0.6">
+      <div class="schema-header">
+        <div class="schema-name" style="color:var(--muted)">embeddings_index</div>
+        <div class="schema-badge" style="background:rgba(90,90,122,0.2);color:var(--muted)">Optional</div>
+      </div>
+      <div class="schema-fields">
+        <div class="field-row"><span class="field-name">article_id</span><span class="field-type">UUID FK</span></div>
+        <div class="field-row"><span class="field-name">chunk_idx</span><span class="field-type">INT</span><span class="field-note">if chunked</span></div>
+        <div class="field-row"><span class="field-name">text_chunk</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">embedding</span><span class="field-type">VECTOR(1536)</span><span class="field-note">pgvector / qdrant</span></div>
+        <div class="field-row"><span class="field-note" style="color:var(--muted);font-style:italic">Enables semantic sector matching<br>beyond keyword rules</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MATH TAB ===== -->
+<div id="tab-math" class="tab-content">
+  <div class="math-view">
+
+    <div class="math-block">
+      <div class="math-block-title" style="color:var(--accent2)">DPO Core Loss</div>
+      <div class="equation">L_DPO = -E[ log σ( β·(r_w - r_l) ) ]</div>
+      <div class="equation" style="color:var(--accent3)">r(x,y) = β · log( π_θ(y|x) / π_ref(y|x) )</div>
+      <div class="eq-explain">
+        <span class="eq-var">β</span> controls KL divergence penalty strength (start at 0.1).<br>
+        <span class="eq-var">y_w</span> is the chosen (preferred) response, <span class="eq-var">y_l</span> is rejected.<br>
+        <span class="eq-var">π_ref</span> is frozen — it provides the baseline log-probabilities.<br>
+        The sigmoid <span class="eq-var">σ</span> maps the margin to [0,1], treated as a probability of correct ranking.
+      </div>
+    </div>
+
+    <div class="math-block">
+      <div class="math-block-title" style="color:var(--accent1)">Sequence Log-Probability</div>
+      <div class="equation">log π(y|x) = Σ_t log p(y_t | x, y_{&lt;t})</div>
+      <div class="eq-explain">
+        The model outputs a distribution over vocab at each position.<br>
+        You gather the log-prob of the <em>actual</em> token at each position, then sum.<br>
+        In PyTorch: <span class="eq-var">F.cross_entropy</span> gives negative log-prob per token → negate + sum.
+      </div>
+      <div class="code-block">def seq_logprob(logits, labels, mask):
+    # logits: [B, T, V], labels: [B, T]
+    log_probs = F.log_softmax(logits, dim=-1)
+    tok_lp = log_probs.gather(2, labels.unsqueeze(-1)).squeeze(-1)
+    return (tok_lp * mask).sum(-1)  # [B]</div>
+    </div>
+
+    <div class="math-block">
+      <div class="math-block-title" style="color:var(--accent1)">Full DPO Loss in PyTorch</div>
+      <div class="code-block">def dpo_loss(pi_logits_w, pi_logits_l,
+             ref_logits_w, ref_logits_l,
+             labels_w, labels_l, mask_w, mask_l,
+             beta=0.1):
+
+    lp_w  = seq_logprob(pi_logits_w,  labels_w, mask_w)
+    lp_l  = seq_logprob(pi_logits_l,  labels_l, mask_l)
+    ref_w = seq_logprob(ref_logits_w, labels_w, mask_w)
+    ref_l = seq_logprob(ref_logits_l, labels_l, mask_l)
+
+    # log-ratio advantage
+    adv_w = lp_w - ref_w   # [B]
+    adv_l = lp_l - ref_l   # [B]
+
+    # DPO margin
+    margin = beta * (adv_w - adv_l)
+
+    loss = -F.logsigmoid(margin).mean()
+
+    # diagnostics
+    reward_gap = (adv_w - adv_l).mean().item()  # should grow +
+    return loss, reward_gap</div>
+    </div>
+
+    <div class="math-block">
+      <div class="math-block-title" style="color:var(--accent4)">Sector Scoring (Article → Alert)</div>
+      <div class="equation">score(a, s) = α · keyword_hits(a,s) + (1-α) · cosine_sim(emb_a, emb_s)</div>
+      <div class="eq-explain">
+        <span class="eq-var">a</span> = article (title + body).<br>
+        <span class="eq-var">s</span> = sector definition (keywords + representative embedding).<br>
+        <span class="eq-var">α</span> = blend weight, e.g. 0.4 for keyword, 0.6 for semantic.<br>
+        Fire alert when <span class="eq-var">score ≥ min_confidence</span> from <span class="eq-var">watched_sectors</span>.<br>
+        Start with α=1.0 (pure keyword) → add semantic matching once embeddings are set up.
+      </div>
+    </div>
+
+    <div class="math-block">
+      <div class="math-block-title" style="color:var(--accent3)">Key Metrics to Track</div>
+      <div class="eq-explain">
+        <strong style="color:var(--text)">reward_gap</strong> — E[r(x,y_w) - r(x,y_l)]. Should increase during training. If it stays near 0 or goes negative, your data has low contrast or β is too large.<br><br>
+        <strong style="color:var(--text)">KL divergence</strong> ≈ (1/β) · E[log π_θ / π_ref]. Should stay bounded — if it explodes, lower lr or raise β.<br><br>
+        <strong style="color:var(--text)">chosen_logprob increase</strong> — the policy should assign more mass to y_w over time.<br><br>
+        <strong style="color:var(--text)">Alert latency</strong> — time from SA publish to your webhook fire. Target &lt; 60s with a polling interval of 30s.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Detail Panel -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <button class="panel-close" onclick="closePanel()">✕ close</button>
+  <div class="panel-tag" id="panel-tag"></div>
+  <div class="panel-title" id="panel-title"></div>
+  <div id="panel-body"></div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+const panels = {
+  'sa-scraper': {
+    tag: 'Data · Sector Monitor',
+    title: 'SeekingAlpha Scraper',
+    body: `
+      <div class="panel-section">
+        <h4>Strategy</h4>
+        <p>SA doesn't offer a free API. Best approaches: (1) RSS feeds at seekingalpha.com/sector/[id]/feed.xml — free, no auth needed. (2) HTTP scraping with rotation. Start with RSS since it's clean and legal.</p>
+      </div>
+      <div class="panel-section">
+        <h4>Core Code Pattern</h4>
+        <div class="code-block">import feedparser, httpx, time
+
+RSS = "https://seekingalpha.com/sector/{}/feed.xml"
+
+def poll_sector(sector_id, seen_ids, interval=30):
+    while True:
+        feed = feedparser.parse(RSS.format(sector_id))
+        for entry in feed.entries:
+            if entry.id not in seen_ids:
+                seen_ids.add(entry.id)
+                yield entry  # new article
+        time.sleep(interval)</div>
+      </div>
+      <div class="panel-section">
+        <h4>Dependencies</h4>
+        <div class="pill-list">
+          <span class="pill" style="color:var(--accent1)">feedparser</span>
+          <span class="pill" style="color:var(--accent1)">httpx</span>
+          <span class="pill" style="color:var(--accent1)">beautifulsoup4</span>
+          <span class="pill" style="color:var(--accent1)">apscheduler</span>
+          <span class="pill" style="color:var(--accent1)">sqlalchemy</span>
+        </div>
+      </div>`,
+    color: 'var(--accent1)'
+  },
+  'raw-store': {
+    tag: 'Data · Storage',
+    title: 'Raw Article Store',
+    body: `
+      <div class="panel-section">
+        <h4>Recommended Setup</h4>
+        <p>Start with SQLite for local prototyping (zero infra), migrate to PostgreSQL + pgvector when you add semantic search. Use SQLAlchemy ORM so the migration is painless.</p>
+      </div>
+      <div class="panel-section">
+        <h4>Key Design Decisions</h4>
+        <p>Store both raw HTML and stripped text. Index on (published_at, sector_tags) for fast recency queries. The embedding column (VECTOR(768)) enables semantic sector matching beyond keyword rules — add this in phase 2.</p>
+      </div>`,
+    color: 'var(--accent1)'
+  },
+  'hf-dataset': {
+    tag: 'Data · DPO',
+    title: 'Preference Dataset',
+    body: `
+      <div class="panel-section">
+        <h4>Recommended Starting Dataset</h4>
+        <p>HuggingFaceH4/ultrafeedback_binarized — 200k+ preference pairs, GPT-4 rated. Already formatted as {prompt, chosen, rejected}. Load with:</p>
+      </div>
+      <div class="panel-section">
+        <div class="code-block">from datasets import load_dataset
+
+ds = load_dataset(
+  "HuggingFaceH4/ultrafeedback_binarized",
+  split="train_prefs"
+)
+# already has chosen/rejected as message lists
+# need to flatten to strings with tokenizer</div>
+      </div>
+      <div class="panel-section">
+        <h4>Data Quality Filter</h4>
+        <p>Drop pairs where score_gap &lt; 1.0. Low-contrast pairs hurt DPO training — the model can't learn a clear preference signal.</p>
+      </div>`,
+    color: 'var(--accent1)'
+  },
+  'cleaner': {
+    tag: 'Data · Processing',
+    title: 'clean.py',
+    body: `
+      <div class="panel-section">
+        <h4>What to clean for DPO</h4>
+        <p>Remove pairs where chosen ≈ rejected (cosine sim &gt; 0.95). Filter by length (avoid &lt;20 or &gt;2048 tokens). Deduplicate on prompt hash. Remove pairs with toxic content if fine-tuning for safe outputs.</p>
+      </div>
+      <div class="panel-section">
+        <h4>What to clean for SA articles</h4>
+        <p>Strip HTML tags, ads, boilerplate footers. Normalize ticker symbols ($NVDA → NVDA). Extract publication date from meta tags, not scraped text. Flag paywalled articles (body &lt; 200 chars after strip).</p>
+      </div>`,
+    color: 'var(--accent1)'
+  },
+  'dpo-loss': {
+    tag: 'Training · Core',
+    title: 'dpo_loss.py',
+    body: `
+      <div class="panel-section">
+        <h4>What it computes</h4>
+        <p>Four forward passes: policy on chosen, policy on rejected, reference on chosen, reference on rejected. Then computes the log-ratio advantage and sigmoid loss. See Math Reference tab for the full implementation.</p>
+      </div>
+      <div class="panel-section">
+        <h4>Common Bugs</h4>
+        <p>1. Forgetting to mask padding tokens in sequence log-prob sum — divide by actual sequence length.<br><br>2. Not detaching reference model gradients — wrap ref forward pass in torch.no_grad().<br><br>3. β too large (&gt;0.5) causes the model to barely move from reference.</p>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'lora': {
+    tag: 'Model · PEFT',
+    title: 'LoRA Config',
+    body: `
+      <div class="panel-section">
+        <h4>Configuration</h4>
+        <div class="code-block">from peft import LoraConfig, get_peft_model
+
+config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj","v_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM"
+)
+model = get_peft_model(base_model, config)</div>
+      </div>
+      <div class="panel-section">
+        <h4>Why LoRA for DPO</h4>
+        <p>Full fine-tuning a 7B model needs ~80GB VRAM. LoRA with r=16 reduces trainable params to ~0.5%, fitting in a single 24GB GPU. The reference model stays frozen as the original base — no LoRA needed for it.</p>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'base-model': {
+    tag: 'Model · Backbone',
+    title: 'Base Model Loading',
+    body: `
+      <div class="panel-section">
+        <h4>Recommended for MVP</h4>
+        <div class="pill-list">
+          <span class="pill" style="color:var(--accent2)">Qwen2.5-1.5B</span>
+          <span class="pill" style="color:var(--accent2)">SmolLM2-1.7B</span>
+          <span class="pill" style="color:var(--accent2)">Llama-3.2-3B</span>
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="code-block">from transformers import AutoModelForCausalLM
+import torch
+
+model = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-1.5B-Instruct",
+    torch_dtype=torch.bfloat16,
+    device_map="auto",
+    attn_implementation="flash_attention_2"
+)</div>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'ref-model': {
+    tag: 'Model · Frozen',
+    title: 'Reference Model π_ref',
+    body: `
+      <div class="panel-section">
+        <h4>Implementation Note</h4>
+        <p>The reference model is just the same base model loaded separately, with all parameters frozen. It never receives gradient updates. Its job is to provide the "before" log-probabilities so the DPO loss can measure how much the policy is deviating.</p>
+      </div>
+      <div class="panel-section">
+        <div class="code-block">ref_model = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-1.5B-Instruct",
+    torch_dtype=torch.bfloat16,
+    device_map="auto"
+)
+ref_model.eval()
+for p in ref_model.parameters():
+    p.requires_grad_(False)</div>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'trainer': {
+    tag: 'Training · Loop',
+    title: 'trainer.py',
+    body: `
+      <div class="panel-section">
+        <h4>Training Loop Skeleton</h4>
+        <div class="code-block">optimizer = AdamW(model.parameters(), lr=1e-5)
+
+for epoch in range(config.epochs):
+  for batch in dataloader:
+    with torch.no_grad():
+      ref_out_w = ref_model(**batch_w)
+      ref_out_l = ref_model(**batch_l)
+
+    out_w = model(**batch_w)
+    out_l = model(**batch_l)
+
+    loss, gap = dpo_loss(
+      out_w.logits, out_l.logits,
+      ref_out_w.logits, ref_out_l.logits,
+      ...beta=config.beta
+    )
+
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(
+      model.parameters(), 1.0)
+    optimizer.step()
+    optimizer.zero_grad()
+    wandb.log({"loss": loss, "gap": gap})</div>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'config': {
+    tag: 'Training · Hyperparams',
+    title: 'config.py',
+    body: `
+      <div class="panel-section">
+        <h4>Starting Values</h4>
+        <div class="code-block">@dataclass
+class DPOConfig:
+    # DPO
+    beta: float = 0.1       # KL strength
+    # Optimization
+    lr: float = 1e-5
+    batch_size: int = 4
+    grad_accum: int = 8     # effective bs=32
+    epochs: int = 1
+    warmup_steps: int = 100
+    max_grad_norm: float = 1.0
+    # Model
+    model_name: str = "Qwen/Qwen2.5-1.5B-Instruct"
+    max_length: int = 1024
+    lora_r: int = 16
+    lora_alpha: int = 32</div>
+      </div>`,
+    color: 'var(--accent2)'
+  },
+  'reward-gap': {
+    tag: 'Evaluation · DPO',
+    title: 'Reward Gap Metric',
+    body: `
+      <div class="panel-section">
+        <h4>What you want to see</h4>
+        <p>reward_gap = E[r(x,y_w) - r(x,y_l)] should start near 0 and increase over training. A gap of 1.0–3.0 typically indicates good learning. If it plateaus at 0 or goes negative, something is wrong with your data or β.</p>
+      </div>
+      <div class="panel-section">
+        <h4>Secondary: chosen_logprob drift</h4>
+        <p>Track how much the policy's chosen log-prob moves from the reference. Too much drift (|KL| &gt; 10) means the model is overfit; too little means β is too high. The sweet spot depends on your use case.</p>
+      </div>`,
+    color: 'var(--accent3)'
+  },
+  'sector-eval': {
+    tag: 'Evaluation · Monitor',
+    title: 'Signal Quality',
+    body: `
+      <div class="panel-section">
+        <h4>Metrics</h4>
+        <p><strong style="color:var(--text)">Precision</strong> — of articles tagged as sector X, what % are actually relevant? Hand-label 50 alerts to measure.<br><br><strong style="color:var(--text)">Recall</strong> — of truly relevant articles, what % did we catch? Harder to measure without ground truth.<br><br><strong style="color:var(--text)">Latency</strong> — time from article publish_at to alert fired_at. Track p50/p95.</p>
+      </div>`,
+    color: 'var(--accent3)'
+  },
+  'generate': {
+    tag: 'Serving · Inference',
+    title: 'generate.py',
+    body: `
+      <div class="panel-section">
+        <h4>Merge LoRA and serve</h4>
+        <div class="code-block">from peft import PeftModel
+
+# merge weights for faster inference
+model = AutoModelForCausalLM.from_pretrained(base)
+model = PeftModel.from_pretrained(model, lora_path)
+model = model.merge_and_unload()
+
+# then wrap with vLLM for throughput
+from vllm import LLM, SamplingParams
+llm = LLM(model=merged_model_path)
+outputs = llm.generate(prompts, SamplingParams(
+    temperature=0.7, max_tokens=512
+))</div>
+      </div>`,
+    color: '#60a5fa'
+  },
+  'api-server': {
+    tag: 'Serving · API',
+    title: 'FastAPI Server',
+    body: `
+      <div class="panel-section">
+        <h4>Endpoints</h4>
+        <div class="code-block">POST /generate
+  body: {prompt: str, max_tokens: int}
+  → {response: str, logprobs: [...]}
+
+POST /analyze-article
+  body: {text: str, sectors: [str]}
+  → {matches: [{sector, score}]}
+
+POST /webhook/article-alert
+  # SA scraper posts here when new article found
+  body: {article_id: uuid}
+  → triggers sector scoring + alert pipeline</div>
+      </div>`,
+    color: '#60a5fa'
+  },
+  'alerts': {
+    tag: 'Monitor · Output',
+    title: 'Alert System',
+    body: `
+      <div class="panel-section">
+        <h4>Implementation</h4>
+        <div class="code-block">async def fire_alert(article, sector, score):
+    msg = (
+        f"🔔 [{sector.upper()}] New article\\n"
+        f"*{article.title}*\\n"
+        f"Score: {score:.2f} | "
+        f"{article.published_at:%Y-%m-%d %H:%M}\\n"
+        f"{article.url}"
+    )
+    # Slack
+    await httpx.post(SLACK_WEBHOOK, json={"text": msg})
+    # DB
+    db.insert(sector_alerts, {
+        "article_id": article.id,
+        "sector": sector.name,
+        "confidence": score,
+        "channel": "slack"
+    })</div>
+      </div>`,
+    color: 'var(--accent4)'
+  }
+};
+
+function openPanel(id) {
+  const data = panels[id];
+  if (!data) return;
+  document.getElementById('panel-tag').textContent = data.tag;
+  document.getElementById('panel-tag').style.color = data.color;
+  document.getElementById('panel-title').textContent = data.title;
+  document.getElementById('panel-title').style.color = data.color;
+  document.getElementById('panel-body').innerHTML = data.body;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('active');
+
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('active');
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+}
+</script>
+</body>
+</html>
